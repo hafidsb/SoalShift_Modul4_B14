@@ -8,13 +8,15 @@
 #include <errno.h>
 #include <sys/time.h>
 
-static const char *dirpath = "/home/suicidal_/Documents";
+static const char *dirpath = "/home/aldinata/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
-	int res;
+  int res;
+	char fpath[1000];
+	sprintf(fpath,"%s%s",dirpath,path);
+	res = lstat(fpath, stbuf);
 
-	res = lstat(path, stbuf);
 	if (res == -1)
 		return -errno;
 
@@ -24,13 +26,22 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		       off_t offset, struct fuse_file_info *fi)
 {
+  char fpath[1000];
+	if(strcmp(path,"/") == 0)
+	{
+		path=dirpath;
+		sprintf(fpath,"%s",path);
+	}
+	else sprintf(fpath, "%s%s",dirpath,path);
+	int res = 0;
+
 	DIR *dp;
 	struct dirent *de;
 
 	(void) offset;
 	(void) fi;
 
-	dp = opendir(path);
+	dp = opendir(fpath);
 	if (dp == NULL)
 		return -errno;
 
@@ -39,8 +50,8 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		memset(&st, 0, sizeof(st));
 		st.st_ino = de->d_ino;
 		st.st_mode = de->d_type << 12;
-		if (filler(buf, de->d_name, &st, 0))
-			break;
+		res = (filler(buf, de->d_name, &st, 0));
+			if(res!=0) break;
 	}
 
 	closedir(dp);
@@ -50,11 +61,31 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-	int fd;
-	int res;
-
+  char fpath[1000];
+	if(strcmp(path,"/") == 0)
+	{
+		path=dirpath;
+		sprintf(fpath,"%s",path);
+	}
+	else sprintf(fpath, "%s%s",dirpath,path);
+	int res = 0;
+  int fd = 0 ;
+//start
+char cek[5]; //buat ngecek ekstensi
+memset(cek, '\0', sizeof(cek));
+int eks= strlen(fpath)-4;
+cek[0]=fpath[eks];
+cek[1]=fpath[eks+1];
+cek[2]=fpath[eks+2];
+cek[3]=fpath[eks+3];
+cek[4]='\0';
+if(strcmp(cek, ".txt") == 0 || strcmp(cek, ".doc") == 0 || strcmp(cek, ".pdf") == 0){
+	char tampileror[150]={"zenity --error --text=\"Terjadi kesalahan! File berisi konten berbahaya.\""};
+	system(tampileror);
+	return 0;
+}
 	(void) fi;
-	fd = open(path, O_RDONLY);
+	fd = open(fpath, O_RDONLY);
 	if (fd == -1)
 		return -errno;
 
