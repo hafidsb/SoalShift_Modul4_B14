@@ -82,6 +82,12 @@ cek[4]='\0';
 if(strcmp(cek, ".txt") == 0 || strcmp(cek, ".doc") == 0 || strcmp(cek, ".pdf") == 0){
 	char tampileror[150]={"zenity --error --text=\"Terjadi kesalahan! File berisi konten berbahaya.\""};
 	system(tampileror);
+	//menambahkan .ditandai	
+	char new[1000];
+	strcpy(new, fpath);
+	strcat(new, ".ditandai");
+	sprintf(tampileror, "mv %s %s", fpath, new); //mengisi string tampileror dg mv ...
+	system(tampileror); // merename file di disk
 	return 0;
 }
 	(void) fi;
