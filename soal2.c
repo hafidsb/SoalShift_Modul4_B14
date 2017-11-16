@@ -58,10 +58,48 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
+static int xmp_chmod(const char *path, mode_t mode)
+{
+	char fpath[1000];
+	if(strcmp(path,"/") == 0)
+	{
+		path=dirpath;
+		sprintf(fpath,"%s",path);
+	}
+	else sprintf(fpath, "%s%s",dirpath,path);
+
+	int res;
+
+	res = chmod(path, mode);
+	if (res == -1)
+		return -errno;
+
+	return 0;
+}
+
+static int xmp_mkdir(const char *path, mode_t mode)
+{
+	char fpath[1000];
+	if(strcmp(path,"/") == 0)
+	{
+		path=dirpath;
+		sprintf(fpath,"%s",path);
+	}
+	else sprintf(fpath, "%s%s",dirpath,path);
+
+	int res;
+
+	res = mkdir(path, mode);
+	if (res == -1)
+		return -errno;
+
+	return 0;
+}
+
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-  char fpath[1000];
+  	char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
 		path=dirpath;
@@ -70,7 +108,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 	else sprintf(fpath, "%s%s",dirpath,path);
 	int res = 0;
   int fd = 0 ;
-//start
+//start_1
 char cek[5]; //buat ngecek ekstensi
 memset(cek, '\0', sizeof(cek));
 int eks= strlen(fpath)-4;
@@ -88,9 +126,18 @@ if(strcmp(cek, ".txt") == 0 || strcmp(cek, ".doc") == 0 || strcmp(cek, ".pdf") =
 	strcat(new, ".ditandai");
 	sprintf(tampileror, "mv %s %s", fpath, new); //mengisi string tampileror dg mv ...
 	system(tampileror); // merename file di disk
+	//finish_1
+	//start_2
+	mode_t modedir = 0777;
+	sprintf(tampileror, "%s/rahasia", dirpath);
+	xmp_mkdir(tampileror, modedir);
+	sprintf(tampileror,"mv %s %s/rahasia/%s.ditandai", new, dirpath, path);
+  	system(tampileror);
+	mode_t ubah = 0;
+	xmp_chmod(new, ubah);
 	return 0;
 }
-//finish
+//finish2
 	(void) fi;
 	fd = open(fpath, O_RDONLY);
 	if (fd == -1)
@@ -108,6 +155,8 @@ static struct fuse_operations xmp_oper = {
 	.getattr	= xmp_getattr,
 	.readdir	= xmp_readdir,
 	.read		= xmp_read,
+	.chmod	= xmp_chmod, //soal2
+	.mkdir	= xmp_mkdir,
 };
 
 int main(int argc, char *argv[])
